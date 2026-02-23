@@ -11,7 +11,7 @@ use ratatui::widgets::{Block, Borders, Paragraph, Wrap, Widget};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use clap::Parser;
 
-/// Simple program to greet a person
+/// Simple word guessing game inspired by Wordle
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
