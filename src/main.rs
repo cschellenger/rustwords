@@ -16,7 +16,7 @@ use clap::Parser;
 #[command(version, about, long_about = None)]
 struct Args {
     /// Override the word to guess (for testing)
-    #[arg(short, long)]
+    #[arg(short, long, default_value = "")]
     word: String,
 
     /// Override the maximum number of guesses (for testing or as a difficulty setting)
