@@ -9,7 +9,20 @@ use ratatui::style::{Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap, Widget};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use clap::Parser;
 
+/// Simple program to greet a person
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// Override the word to guess (for testing)
+    #[arg(short, long)]
+    word: String,
+
+    /// Override the maximum number of guesses (for testing or as a difficulty setting)
+    #[arg(short, long, default_value_t = 6)]
+    max_guesses: u8,
+}
 
 struct WordGame {
     word: String,
@@ -225,17 +238,27 @@ struct AlphabetWidget<'a> {
 impl<'a> Widget for AlphabetWidget<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let block = Block::default().title("Alphabet").borders(Borders::ALL);
+        // Generate an alphabet vector with default styling
         let mut alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".chars().map(|c| {
            Span::raw(c.to_string())
         }).collect::<Vec<Span>>();
+        // For each guessed word we will update the styling of the letters in the alphabet
         self.word_game.guessed_words.iter().for_each(|guess| {
+            // For each letter, update the styling
             guess.chars().enumerate().for_each(|(i, c)| {
+                // Convert to uppercase for indexing into the alphabet vector
                 let c_upper = c.to_ascii_uppercase();
+                // Calculate the index for the alphabet vector (A=0, B=1, ..., Z=25)
                 let idx = (c_upper as u8 - b'A') as usize;
                 if c_upper == self.word_game.word.chars().nth(i).unwrap().to_ascii_uppercase() {
+                    // Correct letter and position
                     alphabet[idx] = Span::styled(c_upper.to_string(), Style::default().fg(Color::Green));
                 } else if self.word_game.word.contains(c) {
-                    alphabet[idx] = Span::styled(c_upper.to_string(), Style::default().fg(Color::LightYellow));
+                    // Correct letter but wrong position
+                    // Do not update the color to yellow if it is already green (correct position)
+                    if alphabet[idx].style.fg != Some(Color::Green) {
+                        alphabet[idx] = Span::styled(c_upper.to_string(), Style::default().fg(Color::LightYellow));
+                    }
                 } else {
                     alphabet[idx] = Span::styled(c_upper.to_string(), Style::default().fg(Color::DarkGray));
                 }
@@ -249,13 +272,22 @@ impl<'a> Widget for AlphabetWidget<'a> {
 }
 
 fn main() -> io::Result<()> {
+    let args = Args::parse();
+    // List of allowed guess words
     let valid_words: Vec<String> = include_str!("valid-words.txt").lines().map(|line| line.to_string()).collect();
+    // List of words that can be chosen as the word to guess
     let guess_words: Vec<String> = include_str!("words.txt").lines().map(|line| line.to_string()).collect();
     // Get an RNG:
     let mut rng = rand::rng();
-    let word_index: u32 = rng.next_u32() % guess_words.len() as u32;
-    let word: String = guess_words[word_index as usize].clone();
-    println!("Word: {}", word);
-    let mut game = WordGame::new(word, valid_words, 6);
+    let word = if args.word.len() > 0 {
+        args.word.clone()
+    } else {
+        // Choose a random word from the list of guess words:
+        let word_index: u32 = rng.next_u32() % guess_words.len() as u32;
+        guess_words[word_index as usize].clone()
+    };
+    // Initialize the game
+    let mut game = WordGame::new(word, valid_words, args.max_guesses);
+    // Run the game loop
     ratatui::run(|terminal| game.run(terminal))
 }

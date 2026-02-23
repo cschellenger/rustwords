@@ -12,6 +12,9 @@ A word is randomly chosen from [words.txt](./src/words.txt) and you must guess i
 
 ## Dependencies
 
-This project uses [ratatui](https://ratatui.rs/) and [rand](https://docs.rs/rand/latest/rand/).
+See [Cargo.toml](./Cargo.toml) for details
 
-See [Cargo.toml](./Cargo.toml)
+This project uses:
+- [ratatui](https://ratatui.rs/) for TUI
+- [rand](https://docs.rs/rand/latest/rand/) for choosing random word
+- [clap](https://docs.rs/clap/latest/clap/) for argument parsing
